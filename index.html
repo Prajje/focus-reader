@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Focus Reader</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="bar">
+    <h1>focus reader</h1>
+    <form id="urlForm" class="row">
+      <input id="urlInput" type="url" placeholder="paste any blog URL…" required />
+      <button type="submit" id="convertBtn">convert</button>
+    </form>
+    <div class="row toggle" role="radiogroup" aria-label="Reading mode">
+      <button class="mode is-active" data-mode="original" role="radio" aria-checked="true">original</button>
+      <button class="mode" data-mode="bionic" role="radio" aria-checked="false">bionic</button>
+      <button class="mode" data-mode="spaced" role="radio" aria-checked="false">spaced</button>
+    </div>
+    <p id="status" class="status" aria-live="polite"></p>
+  </header>
+  <main>
+    <iframe id="frame" sandbox="allow-same-origin" title="Reformatted page"></iframe>
+  </main>
+  <script type="module" src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,62 @@
+import { fetchPage } from "./fetcher.js";
+import { applyBionic, applySpaced } from "./transforms.js";
+
+const form = document.getElementById("urlForm");
+const input = document.getElementById("urlInput");
+const btn = document.getElementById("convertBtn");
+const frame = document.getElementById("frame");
+const status = document.getElementById("status");
+const modeButtons = [...document.querySelectorAll(".mode")];
+
+let originalHtml = null;
+let mode = "original";
+
+form.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const url = input.value.trim();
+  if (!url) return;
+  setStatus("fetching…");
+  btn.disabled = true;
+  try {
+    originalHtml = await fetchPage(url);
+    await renderMode(mode);
+    setStatus("");
+  } catch (err) {
+    setStatus(err.message || "failed to fetch", true);
+    originalHtml = null;
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+modeButtons.forEach((b) => {
+  b.addEventListener("click", () => {
+    if (b.dataset.mode === mode) return;
+    mode = b.dataset.mode;
+    modeButtons.forEach((m) => {
+      const active = m.dataset.mode === mode;
+      m.classList.toggle("is-active", active);
+      m.setAttribute("aria-checked", String(active));
+    });
+    if (originalHtml) renderMode(mode);
+  });
+});
+
+function renderMode(mode) {
+  return new Promise((resolve) => {
+    if (!originalHtml) return resolve();
+    frame.onload = () => {
+      const doc = frame.contentDocument;
+      if (!doc) return resolve();
+      if (mode === "bionic") applyBionic(doc);
+      else if (mode === "spaced") applySpaced(doc);
+      resolve();
+    };
+    frame.srcdoc = originalHtml;
+  });
+}
+
+function setStatus(text, isError = false) {
+  status.textContent = text;
+  status.classList.toggle("error", isError);
+}
