@@ -1,11 +1,41 @@
-const PROXY = "https://api.allorigins.win/raw?url=";
+const PROXY = "https://api.codetabs.com/v1/proxy?quest=";
+const TIMEOUT_MS = 15000;
 
-export async function fetchPage(url) {
-  const res = await fetch(PROXY + encodeURIComponent(url));
-  if (!res.ok) throw new Error(`Proxy returned ${res.status}`);
-  const html = await res.text();
-  if (!html.trim()) throw new Error("Empty response");
+export async function fetchPage(url, onProgress) {
+  let html = await tryDirect(url, onProgress);
+  if (html === null) html = await tryProxy(url, onProgress);
   return injectBase(html, url);
+}
+
+async function tryDirect(url, onProgress) {
+  onProgress?.("trying direct fetch…");
+  try {
+    const res = await fetchWithTimeout(url, TIMEOUT_MS);
+    if (!res.ok) return null;
+    const html = await res.text();
+    return html.trim() ? html : null;
+  } catch {
+    return null;
+  }
+}
+
+async function tryProxy(url, onProgress) {
+  onProgress?.("blocked by CORS — routing through proxy…");
+  const res = await fetchWithTimeout(PROXY + encodeURIComponent(url), TIMEOUT_MS);
+  if (!res.ok) throw new Error(`proxy returned ${res.status}`);
+  const html = await res.text();
+  if (!html.trim()) throw new Error("empty response from proxy");
+  return html;
+}
+
+async function fetchWithTimeout(url, ms) {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), ms);
+  try {
+    return await fetch(url, { signal: ctrl.signal, redirect: "follow" });
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 function injectBase(html, url) {

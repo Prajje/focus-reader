@@ -18,7 +18,8 @@ form.addEventListener("submit", async (e) => {
   setStatus("fetching…");
   btn.disabled = true;
   try {
-    originalHtml = await fetchPage(url);
+    originalHtml = await fetchPage(url, setStatus);
+    setStatus("rendering…");
     await renderMode(mode);
     setStatus("");
   } catch (err) {
