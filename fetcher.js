@@ -4,7 +4,22 @@ const TIMEOUT_MS = 15000;
 export async function fetchPage(url, onProgress) {
   let html = await tryDirect(url, onProgress);
   if (html === null) html = await tryProxy(url, onProgress);
+  if (looksLikeBotWall(html)) {
+    throw new Error("this site is behind bot protection (Cloudflare) and can't be reformatted");
+  }
   return injectBase(html, url);
+}
+
+function looksLikeBotWall(html) {
+  const head = html.slice(0, 8000).toLowerCase();
+  return (
+    head.includes("enable javascript and cookies to continue") ||
+    head.includes("cf-browser-verification") ||
+    head.includes("cf-challenge") ||
+    head.includes("cf-mitigated") ||
+    head.includes("just a moment") ||
+    head.includes("checking your browser")
+  );
 }
 
 async function tryDirect(url, onProgress) {
